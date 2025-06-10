@@ -1,0 +1,25 @@
+import numpy as np
+import pandas as pd
+
+data=pd.read_csv('')
+
+attr=np.array(data)[:,:-1]
+tar=np.array(data)[:,-1]
+
+print("target")
+print(data)
+
+def train(attr,tar):
+    for i,val in enumerate(tar):
+        if val=='Yes':
+            sp_h=attr[i].copy()
+            break
+    for i, val in enumerate(attr):
+        if tar[i]=='Yes':
+            for x in range(len(sp_h)):
+                if val[x]!=sp_h[x]:
+                    sp_h[x]='?'
+                else:
+                    pass
+    return sp_h
+print(train(attr,tar))

@@ -1,0 +1,43 @@
+import numpy as np
+import pandas as pd 
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.datasets import fetch_california_housing
+
+data=fetch_california_housing(as_frame=True)
+hed_df=data.frame
+
+num_fea=hed_df.select_dtypes(include=[np.number]).columns
+print(num_fea)
+
+plt.figure(figsize=(15,10))
+for i,feature in enumerate(num_fea):
+    plt.subplot(3,3,i+1)
+    sns.histplot(hed_df[feature],kde=True,bins=10,color='blue')
+    plt.title("hist")
+    plt.tight_layout()
+    plt.show()
+    
+plt.figure(figsize=(15,10))
+for i,feature in enumerate(num_fea):
+    plt.subplot(3,3,i+1)
+    sns.boxplot(hed_df[feature],color='yellow')
+    plt.title("hist")
+    plt.tight_layout()
+    plt.show()
+    
+    
+print("outliers")
+
+outliers_summary={}
+for feature in num_fea:
+    Q1=hed_df[feature].quantile(0.25)
+    Q3=hed_df[feature].quantile(0.75)
+    IQR=Q3-Q1
+    lb=Q1-1.5*IQR
+    ub=Q3+1.5*IQR
+    outliers=hed_df[(hed_df[feature]<lb)|(hed_df[feature]<ub)]
+    outliers_summary[feature]=len(outliers)
+    print(f"the outlers{feature}is :{len(outliers)}")
+print("data summary")
+print(hed_df.describe()).
