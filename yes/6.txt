@@ -1,27 +1,37 @@
-import numpy as np
-import matplotlib.pyplot as plt
+#include <stdio.h>
+#include <mpi.h>
 
-def lwr(X_train,y_train,X_test,tau):
-  distance=np.abs(X_test-X_train)
-  weight=np.exp(-(distance**2)/(2*tau**2))
-  X=np.vstack((np.ones(len(X_train)),X_train)).T
-  W=np.diag(weight)
-  beta=np.linalg.inv(X.T @ W @ X) @ X.T @ W @ y_train
-  return beta @ [1, X_test]
+int main(int argc, char *argv[]) {
+    int rank, data_send, data_recv;
 
-X_train=np.array([5, 1, 2, 1])
-y_train=np.array([25, 5, 7, 8])
-X_test=np.linspace(min(X_train),max(X_train),100)
-tau=0.4
-lwr_pred=[lwr(X_train,y_train,pt,tau)for pt in X_test]
+    MPI_Init(&argc, &argv);
 
-X_std=np.c_[np.ones(len(X_train)),X_train]
-beta_std=np.linalg.inv(X_std.T @ X_std) @ X_std.T @ y_train
-std_pred=beta_std[0]+beta_std[1]*X_test
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-plt.figure()
-plt.scatter(X_train,y_train,color='blue',label='TD')
-plt.plot(X_test, lwr_pred, color='brown', label='LWR')
-plt.plot(X_test, std_pred, color='green', label='Standard Regression')
-plt.legend()
-plt.show()
+    data_send = rank;   // Send the rank value
+
+    if (rank == 0) {
+        // Send to Process 1
+        MPI_Send(&data_send, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+
+        // Receive from Process 1
+        MPI_Recv(&data_recv, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        printf("Process %d received %d\n", rank, data_recv);
+    }
+    else if (rank == 1) {
+        // Send to Process 0
+        MPI_Send(&data_send, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+        // Receive from Process 0
+        MPI_Recv(&data_recv, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        printf("Process %d received %d\n", rank, data_recv);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+
+
+Process 1 received message: 0 Process 0 received message: 1
