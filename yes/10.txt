@@ -1,48 +1,12 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import load_breast_cancer
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.metrics import confusion_matrix, classification_report
+4
+Compile & Run
+Compile the Code
+The easiest method is to use the build task. With your `.c` file open, press `Ctrl+Shift+B`. Alternatively, you can compile manually from the terminal. For a file named `my_program.c`, the command is:
 
-data = load_breast_cancer()
-X = data.data
-y = data.target
+gcc -fopenmp my_program.c -o my_program
 
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+Run the Executable
+After a successful compilation, an executable file is created. Run it from the terminal:
 
-kmeans = KMeans(n_clusters=2, random_state=42)
-y_kmeans = kmeans.fit_predict(X_scaled)
-
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X_scaled)
-
-df = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
-df['Cluster'] = y_kmeans
-df['True Label'] = y
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(data=df, x='PC1', y='PC2', hue='Cluster', s=100, edgecolor='black',
-alpha=0.7)
-plt.title('K-Means Clustering of Breast Cancer Dataset')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.legend(title="Cluster")
-plt.grid(True)
-plt.show()
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(data=df, x='PC1', y='PC2', hue='Cluster',s=100, edgecolor='black',
-alpha=0.7)
-centers = pca.transform(kmeans.cluster_centers_)
-plt.scatter(centers[:, 0], centers[:, 1], s=200, c='red', marker='X', label='Centroids')
-plt.title('K-Means Clustering with Centroids')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.legend(title="Cluster")
-plt.grid(True)
-plt.show()
+# On Windows
+./my_program.exe
