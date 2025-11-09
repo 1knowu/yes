@@ -1,18 +1,29 @@
-import seaborn as sns
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_california_housing
+#include <stdio.h>
+#include <omp.h>
 
-C_data=fetch_california_housing(as_frame=True)
-data=C_data.frame
+int main() {
+    int n;
+    printf("Enter the number of iterations: ");
+    scanf("%d", &n);
 
-plt.figure(figsize=(10,8))
-corre_matrix=data.corr()
-sns.heatmap(corre_matrix,annot=True,cmap='coolwarm')
-plt.title('Correlation Matrix')
-plt.show()
+    #pragma omp parallel
+    {
+        #pragma omp for schedule(static, 2)
+        for (int i = 0; i < n; i++) {
+            printf("Thread %d: Iteration %d\n", omp_get_thread_num(), i);
+        }
+    }
 
-sns.pairplot(data,diag_kind='kde', plot_kws={'alpha':0.5})
-plt.suptitle("pairplot",y=1.02)
-plt.show()
+    return 0;
+}
+
+Enter the number of iterations: 8
+Thread 0: Iteration 0
+Thread 0: Iteration 1
+Thread 2: Iteration 4
+Thread 2: Iteration 5
+Thread 1: Iteration 2
+Thread 1: Iteration 3
+Thread 3: Iteration 6
+Thread 3: Iteration 7
+Note: The output order might be jumbled due to the parallel nature of printf.
