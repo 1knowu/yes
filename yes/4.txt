@@ -1,25 +1,69 @@
-import numpy as np
-import pandas as pd
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <math.h>
 
-data=pd.read_csv('')
+int is_prime(int num) {
+    if (num <= 1) return 0;
+    if (num == 2) return 1;
+    if (num % 2 == 0) return 0;
 
-attr=np.array(data)[:,:-1]
-tar=np.array(data)[:,-1]
+    for (int i = 3; i <= sqrt(num); i += 2) {
+        if (num % i == 0) 
+            return 0;
+    }
+    return 1;
+}
 
-print("target")
-print(data)
+int main() {
+    int n;
+    printf("Enter the upper limit (n) to find prime numbers: ");
+    scanf("%d", &n);
 
-def train(attr,tar):
-    for i,val in enumerate(tar):
-        if val=='Yes':
-            sp_h=attr[i].copy()
-            break
-    for i, val in enumerate(attr):
-        if tar[i]=='Yes':
-            for x in range(len(sp_h)):
-                if val[x]!=sp_h[x]:
-                    sp_h[x]='?'
-                else:
-                    pass
-    return sp_h
-print(train(attr,tar))
+    if (n < 2) {
+        printf("There are no prime numbers up to %d.\n", n);
+        return 0;
+    }
+
+    printf("\nFinding prime numbers from 1 to %d...\n", n);
+
+    // Sequential computation
+    double start_time = omp_get_wtime();
+    int sequential_prime_count = 0;
+
+    for (int i = 1; i <= n; i++) {
+        if (is_prime(i)) 
+            sequential_prime_count++;
+    }
+
+    double time_seq = omp_get_wtime() - start_time;
+    printf("\nSequential: Found %d primes in %f seconds\n",
+           sequential_prime_count, time_seq);
+
+    // Parallel computation
+    start_time = omp_get_wtime();
+    int parallel_prime_count = 0;
+
+    #pragma omp parallel for reduction(+:parallel_prime_count) schedule(dynamic)
+    for (int i = 1; i <= n; i++) {
+        if (is_prime(i)) 
+            parallel_prime_count++;
+    }
+
+    double time_par = omp_get_wtime() - start_time;
+    printf("Parallel:   Found %d primes in %f seconds\n",
+           parallel_prime_count, time_par);
+
+    if (time_par > 0 && time_seq > 0)
+        printf("\nSpeedup: %.2fx\n", time_seq / time_par);
+
+    return 0;
+}
+
+
+Enter the upper limit (n) to find prime numbers: 200000
+Finding prime numbers from 1 to 200000 ...
+Sequential: Found 17984 primes in 0.035000 seconds
+Parallel:
+Found 17984 primes in 0.009000 seconds
+Speedup: 3.89x
