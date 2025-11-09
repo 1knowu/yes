@@ -1,19 +1,45 @@
-import numpy as np
-from sklearn.neighbors import KNeighborsClassifier
+#include <stdio.h>
+#include <mpi.h>
 
-data = np.random.rand(100).reshape(-1, 1)
+int main(int argc, char *argv[]) {
+    int rank, size;
+    int number;
 
-labels = np.array(["Class1" if x <= 0.5 else "Class2" for x in data[:50]])
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
 
-train_data, train_labels = data[:50], labels
-test_data = data[50:]
+    // Get the number of processes
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-k_values = [1, 2, 3, 4, 5, 20, 30]
+    // Get the rank (ID) of the process
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-for k in k_values:
-    knn = KNeighborsClassifier(n_neighbors=k)
-    knn.fit(train_data, train_labels)
-    predictions = knn.predict(test_data)
+    // Check minimum number of processes
+    if (size < 2) {
+        if (rank == 0) {
+            printf("This program requires at least 2 processes.\n");
+        }
+        MPI_Finalize();
+        return 0;
+    }
 
-    print(f"Results for k={k}:")
-    print(predictions, "\n")
+    if (rank == 0) {
+        // Process 0 sends a number to Process 1
+        number = 42;
+        printf("Process 0 is sending number %d to Process 1\n", number);
+        MPI_Send(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+    } 
+    else if (rank == 1) {
+        // Process 1 receives the number
+        MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("Process 1 received number %d from Process 0\n", number);
+    }
+
+    // Finalize the MPI environment
+    MPI_Finalize();
+    return 0;
+}
+
+Process 0 is sending number 42 to Process 1
+Process 1 received number 42 from Process 0
+
