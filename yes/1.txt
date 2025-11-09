@@ -1,43 +1,121 @@
-import numpy as np
-import pandas as pd 
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import fetch_california_housing
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+#include <time.h>
 
-data=fetch_california_housing(as_frame=True)
-hed_df=data.frame
+#define MIN_SIZE 1000
 
-num_fea=hed_df.select_dtypes(include=[np.number]).columns
-print(num_fea)
+void merge(int arr[], int left, int mid, int right) {
 
-plt.figure(figsize=(15,10))
-for i,feature in enumerate(num_fea):
-    plt.subplot(3,3,i+1)
-    sns.histplot(hed_df[feature],kde=True,bins=10,color='blue')
-    plt.title("hist")
-    plt.tight_layout()
-    plt.show()
-    
-plt.figure(figsize=(15,10))
-for i,feature in enumerate(num_fea):
-    plt.subplot(3,3,i+1)
-    sns.boxplot(hed_df[feature],color='yellow')
-    plt.title("hist")
-    plt.tight_layout()
-    plt.show()
-    
-    
-print("outliers")
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
 
-outliers_summary={}
-for feature in num_fea:
-    Q1=hed_df[feature].quantile(0.25)
-    Q3=hed_df[feature].quantile(0.75)
-    IQR=Q3-Q1
-    lb=Q1-1.5*IQR
-    ub=Q3+1.5*IQR
-    outliers=hed_df[(hed_df[feature]<lb)|(hed_df[feature]<ub)]
-    outliers_summary[feature]=len(outliers)
-    print(f"the outlers{feature}is :{len(outliers)}")
-print("data summary")
-print(hed_df.describe()).
+    int *L = (int *)malloc(n1 * sizeof(int));
+    int *R = (int *)malloc(n2 * sizeof(int));
+
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[left + i];
+
+    for (int j = 0; j < n2; j++)
+        R[j] = arr[mid + 1 + j];
+
+    int i = 0, j = 0, k = left;
+
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j])
+            arr[k++] = L[i++];
+        else
+            arr[k++] = R[j++];
+    }
+
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+
+    free(L);
+    free(R);
+}
+
+
+void mergesortsec(int arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        mergesortsec(arr, left, mid);
+        mergesortsec(arr, mid + 1, right);
+        merge(arr, left, mid, right);
+    }
+}
+
+
+void mergesortpar(int arr[], int left, int right) {
+
+    if ((right - left + 1) <= MIN_SIZE) {
+        mergesortsec(arr, left, right);
+        return;
+    }
+
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            mergesortpar(arr, left, mid);
+
+            #pragma omp section
+            mergesortpar(arr, mid + 1, right);
+        }
+        merge(arr, left, mid, right);
+    }
+}
+
+
+int main() {
+
+    int n = 100000;
+    int *arr_seq = (int *)malloc(n * sizeof(int));
+    int *arr_par = (int *)malloc(n * sizeof(int));
+
+    srand(time(0));
+
+    for (int i = 0; i < n; i++)
+        arr_par[i] = arr_seq[i] = rand() % 10000;
+
+    printf("Sorting %d elements...\n\n", n);
+
+    double start_time = omp_get_wtime();
+    mergesortsec(arr_seq, 0, n - 1);
+    double time_seq = omp_get_wtime() - start_time;
+    printf("Sequential Merge Sort Time: %f seconds\n", time_seq);
+
+    start_time = omp_get_wtime();
+    mergesortpar(arr_par, 0, n - 1);
+    double time_par = omp_get_wtime() - start_time;
+    printf("Parallel Merge Sort Time: %f seconds\n", time_par);
+
+    printf("\nDifference (Sequential - Parallel): %f seconds\n",
+           time_seq - time_par);
+
+    if (time_par > 0)
+        printf("Speedup: %.2fx\n", time_seq / time_par);
+
+    printf("\nFirst 20 sorted elements:\n");
+    for (int i = 0; i < (n < 20 ? n : 20); i++)
+        printf("%d ", arr_par[i]);
+
+    printf("\n");
+
+    free(arr_seq);
+    free(arr_par);
+
+    return 0;
+}
+
+output
+Sorting 100000 elements ...
+Sequential Merge Sort Time: 0.048000 seconds
+Parallel Merge Sort Time:
+0.025000 seconds
+Difference (Sequential - Parallel): 0.023000 seconds
+Speedup: 1.92x
+Verification: First 20 elements of the sorted array:
+0 1 1 2 3 4 5 5 6 78 8 9 9 10 11 12 13 14 15
