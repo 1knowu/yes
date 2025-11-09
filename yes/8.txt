@@ -1,28 +1,39 @@
-import numpy as np
-import pandas as pd 
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier,plot_tree
+#include <stdio.h>
+#include <mpi.h>
 
-data=pd.read_csv(r"C:/Users/HP/Downloads/WBCD.csv")
-data=data.drop(columns=[col for col in data.columns if 'Unnamed' in col or col=='id'])
+int main(int argc, char **argv) {
+    int rank, size;
+    int data[4] = {10, 20, 30, 40};
+    int recv;
 
-X=data.drop('diagnosis',axis=1)
-y=data['diagnosis']
+    MPI_Init(&argc, &argv);
 
-X_train,X_test,y_train,y_test=train_test_split(X,y,train_size=0.2,random_state=2052025)
-clf=DecisionTreeClassifier(criterion='gini',random_state=42)
-clf.fit(X_train,y_train)
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-accuracy=clf.score(X_test,y_test)
-print(f"the accuracy {accuracy:.2f}")
+    // Send 1 value from data[] to each process
+    MPI_Scatter(data, 1, MPI_INT, &recv, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-plt.figure(figsize=(20,10))
-plot_tree(clf,feature_names=X.columns,class_names=['Benign','Malignant'],filled=True)
-plt.show()
+    // Each process increments its number
+    recv += 1;
 
-new_sample=np.array([[14.5,20.5,95.5,640,0.1,0.2,0.3,0.15,0.25,0.007,0.2,0.3,2.3,30,0.006,0.05,0.05,0.02,0.02,0.004,16,30,100,800,0.14,0.35,0.45,0.2,0.3,0.08]])
+    // Gather results back into data[]
+    MPI_Gather(&recv, 1, MPI_INT, data, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-sample_df=pd.DataFrame(new_sample,columns=X.columns)
-prediction=clf.predict(sample_df)
-print(f"the predictions {prediction[0]}")
+    // Only rank 0 prints the final gathered data
+    if (rank == 0) {
+        printf("Gathered data: ");
+        for (int i = 0; i < size; i++)
+            printf("%d ", data[i]);
+        printf("\n");
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+
+Process 0 received: 10
+Process 1 received: 20
+Process 2 received: 30
+Process 3 received: 40
+Gathered data: 11 21 31 41
