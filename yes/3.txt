@@ -1,33 +1,42 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_iris
-from sklearn.decomposition import PCA
+#include <stdio.h>
+#include <omp.h>
 
-data=load_iris(as_frame=True)
-iris=load_iris()
-data=iris.data
-labels=iris.target
-label_names=iris.target_names
+int fib(int n) {
+    int i, j;
 
-iris_df=pd.DataFrame(data,columns=iris.feature_names)
+    if (n < 2)
+        return n;
+    else {
+        #pragma omp task shared(i) firstprivate(n)
+        i = fib(n - 1);
 
-pca=PCA(n_components=2)
-data_red=pca.fit_transform(data)
-red_df=pd.DataFrame(data_red,columns=['PC1','PC2'])
-red_df['label']=labels
+        #pragma omp task shared(j) firstprivate(n)
+        j = fib(n - 2);
 
-plt.figure(figsize=(8,6))
-colors=['r','g','b']
+        #pragma omp taskwait
+        return i + j;
+    }
+}
 
-for  i,label in enumerate(np.unique(labels)):
-    plt.scatter(
-        red_df[red_df["label"]==label]['PC1'],
-        red_df[red_df["label"]==label]['PC2'],
-        label=label_names[label],
-        color=colors[i])
-plt.title("PCA")
-plt.xlabel("actual")
-plt.ylabel("prectit")
-plt.legend()
-plt.grid()
+int main() {
+    int n;
+
+    printf("Enter the Fibonacci number to calculate: ");
+    scanf("%d", &n);
+
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+
+    #pragma omp parallel
+    {
+        #pragma omp single
+        printf("fib(%d) = %d\n", n, fib(n));
+    }
+
+    return 0;
+}
+
+output:
+
+Enter the Fibonacci number to calculate: 12
+fib(12) = 144
