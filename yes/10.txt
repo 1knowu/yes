@@ -1,12 +1,18 @@
 4
-Compile & Run
-Compile the Code
-The easiest method is to use the build task. With your `.c` file open, press `Ctrl+Shift+B`. Alternatively, you can compile manually from the terminal. For a file named `my_program.c`, the command is:
-
+Compile & Run(omp.h)
 gcc -fopenmp my_program.c -o my_program
 
-Run the Executable
-After a successful compilation, an executable file is created. Run it from the terminal:
-
-# On Windows
 ./my_program.exe
+
+for (mpi.h)
+Open x64 Native Tools Command Prompt for VS and Navigate to the folder where your MPI code is saved (example if file is in `E:\PC_LAB`):
+
+cd /d "E:\PC_LAB"
+
+Now you can compile the code using
+
+cl 5.c msmpi.lib
+
+Run using 
+
+mpiexec -n 2 5.exe
