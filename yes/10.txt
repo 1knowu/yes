@@ -5,7 +5,7 @@ gcc -fopenmp my_program.c -o my_program
 ./my_program.exe
 
 for (mpi.h)
-Open x64 Native Tools Command Prompt for VS and Navigate to the folder where your MPI code is saved (example if file is in `E:\PC_LAB`):
+Open x64 Native Tools Command Prompt for VS and Navigate to the folder where your MPI code is saved (example if file is in `E:\PC_LAB`):(path of the program folder)
 
 cd /d "E:\PC_LAB"
 
@@ -16,3 +16,5 @@ cl 5.c msmpi.lib
 Run using 
 
 mpiexec -n 2 5.exe
+
+(5- program name )
